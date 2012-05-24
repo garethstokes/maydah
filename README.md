@@ -33,3 +33,7 @@ Apps
   * document store integration (e.g. google docs)
 
 
+Models
+------
+
+project <*--*> user <*--*> room <--*> message
