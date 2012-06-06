@@ -1,0 +1,17 @@
+{
+    "name": "maydah",
+    "version": "0.0.1",
+    "description": "maydah - the chat library",
+    "main": "index.js",
+    "private": true,
+    "dependencies": {
+        "express": "2.x.x",
+        "jade": "0.x.x",
+        "sqlite3": "2.1.x",
+        "node-assert-extras": "0.1.0"
+    },
+    "devDependencies": {
+        "vows": "0.5.x"
+    },
+    "engine": "node >= 0.4.1"
+}

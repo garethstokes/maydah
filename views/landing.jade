@@ -1,0 +1,58 @@
+!!! 5
+html(lang="en")
+    head
+        link(href="/styles/base.css", type="text/css", rel="stylesheet")
+        link(href="/styles/landing.css", type="text/css", rel="stylesheet")
+        script(src="/scripts/jquery-1.7.1.min.js")
+        script(src="/scripts/jquery.infieldlabel.min.js")
+        script(src="/scripts/landing.js")
+    body
+        #container
+            div.masthead
+                div.inner
+                    img(src="/images/logo.png")
+                    h1 Get your chat on.
+                    div.links
+                        a(href="#about") What is Maydah
+                        a(href="#signup") Register
+                    div.login
+                        form
+                            p.inlinelabel
+                                label(for="login-email") Email Address
+                                input(type="text", id="login-email", size="16")
+                            p.inlinelabel
+                                label(for="login-password") Password
+                                input(type="password", id="login-password", size="16")
+                            p.inlinelabel
+                                button.login Sign In
+            div.content
+                div.inner
+                    div#about.block
+                        h1.leader Maydah is a free chat service
+                        p.leader Well if you want certain features you might need to pay for them, but the base service is free
+                    div#features.block
+                        h3 Unlimited conversations
+                        p We don't believe in limiting how much you chat
+                        h3 Threadable chats
+                        p Don't get confused by multiple conversations in a single chat window. Spawn a new chat instantantly and keep your conversations managable
+                        h3 Open source themes
+                        p That's right! If you don't like our workflow you can create you own.
+                    div#signup.block
+                        h3 Sign up now
+                        form
+                            p.inlinelabel
+                                label(for="register-email") Email Address
+                                input(type="text", id="register-email", size="28")
+                            p.inlinelabel
+                                label(for="register-name") What should we call you?
+                                input(type="text", id="register-name", size="28")
+                            p.inlinelabel
+                                label(for="register-password") Pick a password
+                                input(type="password", id="register-password", size="28")
+                            p.inlinelabel
+                                label(for="register-password2") Confirm that password
+                                input(type="password", id="register-password2", size="28")
+                            button.signup Create Account
+            div.footer
+                div.inner
+                    p copyright and stuff

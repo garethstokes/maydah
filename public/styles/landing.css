@@ -1,0 +1,214 @@
+html, body {
+	background: #F4F4F4;
+}
+#container 
+{
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	font-size: 1.2em;
+}
+
+#container div.masthead 
+{
+	background: rgb(169,3,41); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(169,3,41,1) 0%, rgba(143,2,34,1) 44%, rgba(109,0,25,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(169,3,41,1)), color-stop(44%,rgba(143,2,34,1)), color-stop(100%,rgba(109,0,25,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(169,3,41,1) 0%,rgba(143,2,34,1) 44%,rgba(109,0,25,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(169,3,41,1) 0%,rgba(143,2,34,1) 44%,rgba(109,0,25,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(169,3,41,1) 0%,rgba(143,2,34,1) 44%,rgba(109,0,25,1) 100%); /* IE10+ */
+	background: linear-gradient(top,  rgba(169,3,41,1) 0%,rgba(143,2,34,1) 44%,rgba(109,0,25,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a90329', endColorstr='#6d0019',GradientType=0 ); /* IE6-9 */
+
+	color: #FFF;
+}
+
+#container div.masthead div.inner,
+#container div.content div.inner, 
+#container div.footer div.inner 
+{
+	width: 980px;
+	margin: 0px auto;
+	padding-top: 24px;
+	padding-bottom: 18px;
+	position: relative;
+}
+
+#container div.masthead div.inner h1
+{
+	font-size: 3em;
+	margin-top: 1em;
+	margin-bottom: 0.6em;
+}
+#container div.masthead div.inner div.links
+{
+	text-align: right;
+}
+#container div.masthead div.inner div.links a
+{
+	color: #FFF;
+	text-decoration: none;
+	margin-left: 40px;
+}
+#container div.masthead div.login
+{
+	position: absolute;
+	top: 8px;
+	right: 8px;
+}
+/* require for infield labels */
+#container div.masthead div.login form p.inlinelabel 
+{ 
+	position:relative;
+	display: inline-block
+}
+#container div.masthead div.login form p.inlinelabel label  
+{ 
+	position:absolute; 
+	top:7px; 
+	left:8px;
+	color: #666;
+}
+
+#container div.masthead div.login form button,
+#container div.masthead div.login form input
+{
+	font-size: 1em;
+	padding: 6px 4px;
+	color: #222;
+	-webkit-border-radius: 6px;
+	border-radius: 6px;
+	border: 1px solid #a90329;
+	-webkit-box-shadow: inset 0px 0px 3px 0px #666;
+	box-shadow: inset 0px 0px 3px 0px #666;
+	margin-right: 1px;
+	margin-left: 0px;
+}
+#container div.masthead div.login form button
+{
+	background: rgb(210,255,82); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(210,255,82,1) 0%, rgba(145,232,66,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(210,255,82,1)), color-stop(100%,rgba(145,232,66,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(210,255,82,1) 0%,rgba(145,232,66,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(210,255,82,1) 0%,rgba(145,232,66,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(210,255,82,1) 0%,rgba(145,232,66,1) 100%); /* IE10+ */
+	background: linear-gradient(top,  rgba(210,255,82,1) 0%,rgba(145,232,66,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d2ff52', endColorstr='#91e842',GradientType=0 ); /* IE6-9 */
+	padding: 4px;
+	font-size: 1em;
+	display: inline-block;
+}
+#container div.masthead div.login form input:focus
+{
+	border: 1px solid #FFF;
+	outline: none;
+}
+
+#container div.content
+{
+	background: rgb(255,255,255); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(255,255,255,1) 0%, rgba(244,244,244,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,1)), color-stop(100%,rgba(244,244,244,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(244,244,244,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(244,244,244,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(244,244,244,1) 100%); /* IE10+ */
+	background: linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(244,244,244,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f4f4f4',GradientType=0 ); /* IE6-9 */
+	padding-bottom: 70px;
+}
+#container div.content div.inner div#features
+{
+
+	background: #f4f4f4;
+	-webkit-border-radius: 8px 8px 0px 0px;
+	border-radius: 8px 8px 0px 0px;
+	-webkit-box-shadow: inset 0px 3px 3px 0px #D4D4D4;
+	box-shadow: inset 0px 3px 3px 0px #D4D4D4;
+	padding: 20px;
+}
+#container div.content div.inner div#features h3
+{
+	font-size: 1.6em;
+	margin-bottom: 12px;
+	color: #060606;
+}
+#container div.content div.inner div#features p
+{
+	font-size: 1em;
+	margin-bottom: 20px;
+	color: #262626;
+}
+#container div.content div.inner div#signup
+{
+	background: #f4f4f4;
+	-webkit-border-radius: 0px 0px 8px 8px;
+	border-radius: 0px 0px 8px 8px;
+	-webkit-box-shadow: inset 0px -3px 3px 0px #E4E4E4;
+	box-shadow: inset 0px -3px 3px 0px #E4E4E4;
+	padding: 60px 20px 20px;
+}
+#container div.content div.inner div#signup h3
+{
+	font-size: 1.6em;
+	margin-bottom: 12px;
+	color: #060606;
+}
+
+#container div.content div.inner div#about h1.leader
+{
+	font-size: 2.9em;
+	margin-top: 1em;
+	margin-bottom: 0em;
+	text-align: center;
+}
+#container div.content div.inner div#about p.leader
+{
+	text-align: center;
+	margin-bottom: 2.9em;
+}
+#container div.content div.inner div#signup form
+{
+	padding-left: 50px;
+}
+#container div.content div.inner div#signup form button,
+#container div.content div.inner div#signup form input
+{
+	font-size: 1.6em;
+	padding: 8px 4px;
+	color: #222;
+	-webkit-border-radius: 6px;
+	border-radius: 6px;
+	border: 1px solid #FFF;
+	-webkit-box-shadow: inset 0px 0px 3px 0px #666;
+	box-shadow: inset 0px 0px 3px 0px #666;
+}
+#container div.content div.inner div#signup form button
+{
+	background: rgb(210,255,82); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(210,255,82,1) 0%, rgba(145,232,66,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(210,255,82,1)), color-stop(100%,rgba(145,232,66,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(210,255,82,1) 0%,rgba(145,232,66,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(210,255,82,1) 0%,rgba(145,232,66,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(210,255,82,1) 0%,rgba(145,232,66,1) 100%); /* IE10+ */
+	background: linear-gradient(top,  rgba(210,255,82,1) 0%,rgba(145,232,66,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d2ff52', endColorstr='#91e842',GradientType=0 ); /* IE6-9 */
+	padding: 16px 20px;
+	font-size: 1.4em;
+}
+#container div.content div.inner div#signup form input:focus
+{
+	border: 1px solid #CCC;
+	outline: none;
+}
+
+/* require for infield labels */
+#container div.content div.inner div#signup form p.inlinelabel 
+{ 
+	position:relative;
+	margin-bottom: 4px;
+}
+#container div.content div.inner div#signup form p.inlinelabel label  
+{ 
+	position:absolute; 
+	top:18px; 
+	left:12px;
+	color: #666;
+}
