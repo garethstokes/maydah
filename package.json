@@ -8,7 +8,9 @@
         "express": "2.x.x",
         "jade": "0.x.x",
         "sqlite3": "2.1.x",
-        "node-assert-extras": "0.1.0"
+        "node-assert-extras": "0.1.0",
+        "uuid": "0.0.2",
+        "underscore": "*"
     },
     "devDependencies": {
         "vows": "0.5.x"
