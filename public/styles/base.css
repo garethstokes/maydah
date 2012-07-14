@@ -84,3 +84,31 @@ hr {
 input, select {
     vertical-align:middle;
 }
+
+body div#maydah-template-container
+{
+    display: none;
+    padding: 8px;
+    position: absolute;
+    top: 16px;
+    width: 100%;
+    width: 98vw;
+    font-size: 16px;
+    font-size: 1.4vw;
+}
+
+body.show-template-choice div#maydah-template-container
+{
+    display: block;
+}
+
+body div#maydah-template-container div.template-option
+{
+    width: 400px;
+    margin: 16px auto;
+}
+body div#maydah-template-container div.template-option a 
+{
+    text-decoration: none;
+    color: #800;
+}

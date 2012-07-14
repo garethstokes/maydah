@@ -1,13 +1,13 @@
 var express = require("express"),
-	db = require("./lib/db"),
+	//db = require("./lib/db"),
 	assert = require("node-assert-extras"),
-	uuid = require("uuid"),
+	uuid = require("uuid-js"),
 	_ = require("underscore"),
 	config = require("./config");
 
 var app = express.createServer();
 
-db.open(config.database);
+//db.open(config.database);
 
 /*
     GENERIC ERROR HANDLER
@@ -19,17 +19,17 @@ var errMsgs = {
 	"418": "I'm a teapot all short and stout.",
 	"500": "Looks like the server misplaced a bit. Sorry.",
 	"501": "Those lazy software engineers haven't implemented this."
-}
+};
 app.error(function(err, req, res) {
 	console.error(err);
 	var code = err.status || 500;
 	res.send({
 		error: err,
 		timestamp: Date.now()
-	}, parseInt(err.status));
+	}, parseInt(err.status, 10));
 });
 
-app.use(express.static(__dirname + '/public'));
+app.use(express["static"](__dirname + '/public'));
 app.use(express.bodyParser());
 app.use(express.cookieParser());
 app.use(express.session({ secret: "The queen is a cunthammer." }));
@@ -45,22 +45,32 @@ function checkAuth(req, res, next) {
 	next();
 }
 
+var templateList = {
+	"console": {
+		script: "/scripts/console-template.js",
+		style: "/styles/console-template.css"
+	}
+};
 /*
 	Web pages
 */
 
 app.get("/", checkAuth, function(req, res, next) {
-	res.send("No place like 127.0.0.1");
+	res.render("home", { layout: false, templateList: templateList });
 });
 
 app.get("/landing", function(req, res, next) {
 	res.render("landing", { layout: false}); 
 });
 
-
 // fake database
 var users = [];
 var rooms = [];
+var eventList = {};
+
+app.get("/db", function(req, res) {
+	res.send({users: users, rooms: rooms, eventList: eventList });
+})
 
 function findUserById(userId) {
 	return _.find(users, function(u) {
@@ -72,6 +82,54 @@ function findRoomById(roomId) {
 	return _.find(rooms, function(r) {
 		return r.id === roomId;
 	});
+}
+
+// add events for a user
+function addEventForUser(userId, eventName, object) {
+	if(!eventList[userId]) {
+		eventList[userId] = [];
+	}
+	eventList[userId].push({
+		name: eventName,
+		data: object,
+		time: Date.now()
+	});
+}
+
+function addEventForUsersInRoom(roomId, eventName, object) {
+	var room = findRoomById(roomId);
+	if(!room) {
+		return;
+	}
+	room.users.forEach(function(userId) {
+		addEventForUser(userId, eventName, object);
+	});
+}
+
+function clearEventForUser(userId, eventName) {
+	if(!eventList[userId]) {
+		return;
+	}
+	eventList[userId] = eventList[userId].filter(function(e) {
+		return e.name === eventName;
+	});
+}
+
+function expireEvents() {
+	// anything older than 10 mins dies
+	var expires = Date.now() - 60000;
+	for(var key in eventList) {
+		eventList[key] = eventList[key].filter(function(e) {
+			return e.time > expires;
+		});
+	}
+}
+setInterval(expireEvents, 60000);
+
+var alltitles = ["captain", "ludicrious", "senator", "magical"];
+var allusernames = ["evil", "danger", "goodlife", "disaster"];
+function randomUsername() {
+	return alltitles[~~(Math.random() * alltitles.length)] + " " + allusernames[~~(Math.random() * allusernames.length)];
 }
 
 
@@ -89,20 +147,49 @@ function standardResponse(responseObject, result) {
 
 app.post("/login", function(req, res, next) {
 	try { 
-		var username = req.body.username;
-		assert.isString(username);
-		var userId = uuid.generate();
+		var email = req.body.email;
+		assert.isString(email);
+		var username = randomUsername();
+		var userId = uuid.create(1).toString();
 		var user = {
 			id: userId,
-			username: username
+			username: username,
+			email: email
 		};
 		users.push(user);
 		req.session.userId = userId;
-		standardResponse(user);
+
+		// hack so that new users automatically have a room
+		// this should be done on signup not signin
+		var room = {
+			id: uuid.create(1).toString(),
+			name:  username + "'s public room",
+			users: [req.session.userId],
+			messages: []
+		};
+		rooms.push(room);
+
+		standardResponse(res, user);
 	} catch(e) {
 		console.error("api.login");
 		next(e);
 	}
+});
+
+app.get("/users/:searchTerm", checkAuth, function(req, res, next) {
+	var term = req.params.searchTerm;
+	assert.isString(term);
+	if(term.length < 4) {
+		// hack so that i can see all users in the system
+		if(term == "*") {
+			return standardResponse(res, users);
+		}
+		return next(new Error("SEARCH_TERM_TOO_SHORT"));
+	}
+	var result = users.filter(function(u) {
+		return u.name == searchTerm || u.email == searchTerm;
+	});
+	standardResponse(res, result);
 });
 
 // - Gets all the rooms the user has access to
@@ -113,7 +200,7 @@ app.get("/rooms", checkAuth, function(req, res, next) {
 			result.push(room);
 		}
 	});
-	standardResponse(result);
+	standardResponse(res, result);
 });
 // - Create a room
 app.post("/rooms", checkAuth, function(req, res, next) {
@@ -121,22 +208,24 @@ app.post("/rooms", checkAuth, function(req, res, next) {
 	assert.isString(roomName);
 
 	var room = {
-		id: uuid.generate(),
+		id: uuid.create(1).toString(),
 		name: roomName,
 		users: [req.session.userId],
 		messages: []
-	}
+	};
 	rooms.push(room);
 
 	standardResponse(res, room);
 });
-// - Get room info
 app.get("/rooms/:id", checkAuth, function(req, res, next) {
 	var roomId = req.params.id;
 	assert.isString(roomId);
 	var room = findRoomById(roomId);
 	if(!room) {
 		return next(new Error("ROOM_NOT_FOUND"));
+	}
+	if(room.users.indexOf(req.session.userId) === -1) {
+		return next(new Error("ACCESS_TO_ROOM_DENIED"));
 	}
 	standardResponse(res, room);
 });
@@ -175,8 +264,12 @@ app.post("/rooms/:id/users", checkAuth, function(req, res, next) {
 	if(room.users.indexOf(req.session.userId) === -1) {
 		return next(new Error("ACCESS_TO_ROOM_DENIED"));
 	}
-	room.users.push(userId);
-	standardResponse(room);
+	if(room.users.indexOf(userId) === -1) {
+		room.users.push(userId);
+	}
+	addEventForUser(userId, "room", [room]);
+	addEventForUsersInRoom(roomId, "invited", [roomId, userId]);
+	standardResponse(res, room);
 });
 // - Get last N messages for a room
 // where N == 1000
@@ -207,12 +300,15 @@ app.post("/rooms/:id/messages", checkAuth, function(req, res, next) {
 	var message = req.body.message;
 	var roomId = req.params.id;
 	assert.isString(roomId);
-	assert.isString(message);
+	assert.isString(message);	
 	var msg = {
+		id: uuid.create(1).toString(),
+		previousMessageId: null,
 		userId: req.session.userId,
+		roomId: roomId,
 		message: message,
 		timestamp: Date.now()
-	}
+	};
 	var room = findRoomById(roomId);
 	if(!room) {
 		return next(new Error("ROOM_NOT_FOUND"));
@@ -220,10 +316,20 @@ app.post("/rooms/:id/messages", checkAuth, function(req, res, next) {
 	if(room.users.indexOf(req.session.userId) === -1) {
 		return next(new Error("ACCESS_TO_ROOM_DENIED"));
 	}
+	if(room.messages.length) {
+		msg.previousMessageId = room.messages[room.messages.length - 1].id;
+	}
 	room.messages.push(msg);
+	addEventForUsersInRoom(roomId, "chat", [msg]);
 	standardResponse(res, msg);
 });
 
+app.get("/events", checkAuth, function(req, res, next) {
+	var userId = req.session.userId;
+	var evts = eventList[userId] || [];
+	standardResponse(res, evts);
+	eventList[userId] = [];
+});
 
 // start the http server
 app.listen(config.port, function() {

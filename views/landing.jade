@@ -5,6 +5,7 @@ html(lang="en")
         link(href="/styles/landing.css", type="text/css", rel="stylesheet")
         script(src="/scripts/jquery-1.7.1.min.js")
         script(src="/scripts/jquery.infieldlabel.min.js")
+        script(src="/scripts/maydah.js")
         script(src="/scripts/landing.js")
     body
         #container
@@ -16,13 +17,13 @@ html(lang="en")
                         a(href="#about") What is Maydah
                         a(href="#signup") Register
                     div.login
-                        form
+                        form#signin(action="javascript:submitLoginForm()")
                             p.inlinelabel
                                 label(for="login-email") Email Address
-                                input(type="text", id="login-email", size="16")
+                                input(type="text", id="login-email", name="email", size="16")
                             p.inlinelabel
                                 label(for="login-password") Password
-                                input(type="password", id="login-password", size="16")
+                                input(type="password", id="login-password", name="password", size="16")
                             p.inlinelabel
                                 button.login Sign In
             div.content

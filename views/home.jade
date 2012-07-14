@@ -1,0 +1,21 @@
+!!! 5
+html(lang="en")
+	head
+		link(href="/styles/base.css", type="text/css", rel="stylesheet")
+		script(src="/scripts/jquery-1.7.1.min.js")
+		script(src="/scripts/maydah.js")
+		script
+			$(function() {
+				var hash = location.hash;
+				if(hash.length) {
+					hash = hash.substr(1);
+					$("#template_" + hash + " a").click();
+				}
+			});
+	body.show-template-choice
+		#maydah-template-container
+			div.template-option
+				h2 Choose your prefered interface
+			each val, key in templateList
+				div.template-option(id="template_#{key}")
+					a(href="##{key}", onclick="maydah.loadInterface('#{val.script}','#{val.style}');") #{key}

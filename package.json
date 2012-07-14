@@ -9,7 +9,7 @@
         "jade": "0.x.x",
         "sqlite3": "2.1.x",
         "node-assert-extras": "0.1.0",
-        "uuid": "0.0.2",
+        "uuid-js": "*",
         "underscore": "*"
     },
     "devDependencies": {
