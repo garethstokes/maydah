@@ -37,18 +37,30 @@
 			$('<div class="log"></div>').text(msg).appendTo(outputDiv);
 		}
 
+		function addMessage(msg) {
+			var msgObj = $('<div class="log" id="msg_' + msg.id + '"></div>').text(msg.message);
+			var lastMsg = $("#msg_".concat(msg.previousMessageId));
+			if(lastMsg.length) {
+				msgObj.insertAfter(lastMsg);
+			} else {
+				// need to draw a gap
+				outputDiv.append(msgObj);
+			}
+		}
+
 		var msgs = room.messages;
 		for(var i=0, ii=msgs.length; i<ii; i++) {
-			log(msgs[i].message);
+			addMessage(msgs[i]);
 		}
 
 		maydah.on("chat", function(chat) {
 			if(chat.roomId == room.id) {
-				log(chat.message);
+				addMessage(chat);
 			}
 		});
-	}
 
+		maydah.usersInRoom(room.id);
+	}
 	
 	function onGetRooms(err, rooms) {
 		if(err) {

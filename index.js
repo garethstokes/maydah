@@ -137,13 +137,12 @@ function randomUsername() {
 	API
 */
 
-function standardResponse(responseObject, result) {
-	responseObject.send({ 
+require("http").ServerResponse.prototype.apiResponse = function(result) {
+	this.send({ 
 		result: result, 
 		timestamp: Date.now() 
 	});
 }
-
 
 app.post("/login", function(req, res, next) {
 	try { 
@@ -169,7 +168,7 @@ app.post("/login", function(req, res, next) {
 		};
 		rooms.push(room);
 
-		standardResponse(res, user);
+		res.apiResponse(user);
 	} catch(e) {
 		console.error("api.login");
 		next(e);
@@ -182,14 +181,14 @@ app.get("/users/:searchTerm", checkAuth, function(req, res, next) {
 	if(term.length < 4) {
 		// hack so that i can see all users in the system
 		if(term == "*") {
-			return standardResponse(res, users);
+			return res.apiResponse(users);
 		}
 		return next(new Error("SEARCH_TERM_TOO_SHORT"));
 	}
 	var result = users.filter(function(u) {
 		return u.name == searchTerm || u.email == searchTerm;
 	});
-	standardResponse(res, result);
+	res.apiResponse(result);
 });
 
 // - Gets all the rooms the user has access to
@@ -200,7 +199,7 @@ app.get("/rooms", checkAuth, function(req, res, next) {
 			result.push(room);
 		}
 	});
-	standardResponse(res, result);
+	res.apiResponse(result);
 });
 // - Create a room
 app.post("/rooms", checkAuth, function(req, res, next) {
@@ -215,7 +214,7 @@ app.post("/rooms", checkAuth, function(req, res, next) {
 	};
 	rooms.push(room);
 
-	standardResponse(res, room);
+	res.apiResponse(room);
 });
 app.get("/rooms/:id", checkAuth, function(req, res, next) {
 	var roomId = req.params.id;
@@ -227,7 +226,7 @@ app.get("/rooms/:id", checkAuth, function(req, res, next) {
 	if(room.users.indexOf(req.session.userId) === -1) {
 		return next(new Error("ACCESS_TO_ROOM_DENIED"));
 	}
-	standardResponse(res, room);
+	res.apiResponse(room);
 });
 // - Get all users in a room 
 app.get("/rooms/:id/users", checkAuth, function(req, res, next) {
@@ -249,7 +248,7 @@ app.get("/rooms/:id/users", checkAuth, function(req, res, next) {
 			result.push(user);
 		}
 	});
-	standardResponse(res, result);
+	res.apiResponse(result);
 });
 // - Add a user to a room - i.e. invite
 app.post("/rooms/:id/users", checkAuth, function(req, res, next) {
@@ -269,7 +268,7 @@ app.post("/rooms/:id/users", checkAuth, function(req, res, next) {
 	}
 	addEventForUser(userId, "room", [room]);
 	addEventForUsersInRoom(roomId, "invited", [roomId, userId]);
-	standardResponse(res, room);
+	res.apiResponse(room);
 });
 // - Get last N messages for a room
 // where N == 1000
@@ -321,13 +320,13 @@ app.post("/rooms/:id/messages", checkAuth, function(req, res, next) {
 	}
 	room.messages.push(msg);
 	addEventForUsersInRoom(roomId, "chat", [msg]);
-	standardResponse(res, msg);
+	res.apiResponse(msg);
 });
 
 app.get("/events", checkAuth, function(req, res, next) {
 	var userId = req.session.userId;
 	var evts = eventList[userId] || [];
-	standardResponse(res, evts);
+	res.apiResponse(evts);
 	eventList[userId] = [];
 });
 
