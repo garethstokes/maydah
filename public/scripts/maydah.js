@@ -187,7 +187,7 @@ var maydah = { };
 		$.get("/rooms/".concat(roomId,"/messages")).success(function(response) {
 			var msgs = response.result;
 			for(var i=0, ii=msgs.length; i<ii; i++) {
-				emit("chat", roomId, msgs[i]);
+				emit("chat", msgs[i]);
 			}
 		}).error(function() {
 			emit("loadMessagesFailed", roomId);

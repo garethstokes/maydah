@@ -27,18 +27,40 @@
 		scrollDiv.append(roomDiv);
 
 		var h = $(window).height();
-		var titleHeight = titleDiv.height();
-		var inputHeight = inputDiv.height();
-		$(outputDiv).height(h - titleHeight - inputHeight - 10);
+		var titleHeight = titleDiv.outerHeight();
+		var inputHeight = inputDiv.outerHeight();
+		$(outputDiv).height(h - titleHeight - inputHeight - 16);
 
-		inputDiv.width(390)
+		inputDiv.width(390);
+
+		function getUser(userId) {
+			var result = null;
+			for(var i=0, ii=room.users.length; i<ii && !result; i++) {
+				if(room.users[i].id === userId) {
+					result = room.users[i];
+				}
+			}
+			return result;
+		}
+
+		function formatDate(date) {
+			if(date.constructor !== Date) {
+				date = new Date(date);
+			}
+			return date.getHours() + ":" + date.getMinutes();
+		}
 
 		function log(msg) {
 			$('<div class="log"></div>').text(msg).appendTo(outputDiv);
 		}
 
 		function addMessage(msg) {
-			var msgObj = $('<div class="log" id="msg_' + msg.id + '"></div>').text(msg.message);
+			var usr = getUser(msg.userId);
+			var msgObj = $('<div class="chat-item" id="msg_' + msg.id + '"></div>');
+			var msgAuthor = $('<div class="user"></div>').text(usr.username);
+			var msgInner = $('<div class="message"></div>').text(msg.message);
+			var msgDate = $('<div class="date"></div>').text(formatDate(msg.timestamp));
+			msgObj.append(msgAuthor).append(msgInner).append(msgDate);
 			var lastMsg = $("#msg_".concat(msg.previousMessageId));
 			if(lastMsg.length) {
 				msgObj.insertAfter(lastMsg);
@@ -48,18 +70,13 @@
 			}
 		}
 
-		var msgs = room.messages;
-		for(var i=0, ii=msgs.length; i<ii; i++) {
-			addMessage(msgs[i]);
-		}
-
 		maydah.on("chat", function(chat) {
 			if(chat.roomId == room.id) {
 				addMessage(chat);
 			}
 		});
 
-		maydah.usersInRoom(room.id);
+		maydah.messages(room.id);
 	}
 	
 	function onGetRooms(err, rooms) {
@@ -72,9 +89,9 @@
 		};
 	}
 
-	maydah.on("invited", function(roomId, userId) {
-		maydah.roomInfo(roomId);
-	});
+	// maydah.on("invited", function(roomId, userId) {
+	// 	maydah.roomInfo(roomId);
+	// });
 	
 	maydah.on("room", function(room) {
 		appendRoom(room);
@@ -85,9 +102,9 @@
 		var rooms = $(".room");
 		scrollDiv.width(rooms.length * (410));
 		rooms.each(function(r) {
-			var titleHeight = $(r).children("div.title").height();
-			var inputHeight = $(r).children("div.input").height();
-			$(r).children("div.output").height(h - titleHeight - inputHeight - 10);
+			var titleHeight = $(r).children("div.title").outerHeight();
+			var inputHeight = $(r).children("div.input").outerHeight();
+			$(r).children("div.output").height(h - titleHeight - inputHeight - 16);
 		});
 	});
 

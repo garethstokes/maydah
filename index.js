@@ -126,8 +126,8 @@ function expireEvents() {
 }
 setInterval(expireEvents, 60000);
 
-var alltitles = ["captain", "ludicrious", "senator", "magical"];
-var allusernames = ["evil", "danger", "goodlife", "disaster"];
+var alltitles = ["captain", "ludicrious", "senator", "general"];
+var allusernames = ["evil", "danger", "typhoon", "disaster", "snowflake"];
 function randomUsername() {
 	return alltitles[~~(Math.random() * alltitles.length)] + " " + allusernames[~~(Math.random() * allusernames.length)];
 }
@@ -142,6 +142,15 @@ require("http").ServerResponse.prototype.apiResponse = function(result) {
 		result: result, 
 		timestamp: Date.now() 
 	});
+}
+
+function formatRoomObject(roomObj) {
+	var result = {
+		id: roomObj.id,
+		name: roomObj.name,
+		users: roomObj.users.map(findUserById)
+	}
+	return result;
 }
 
 app.post("/login", function(req, res, next) {
@@ -196,7 +205,7 @@ app.get("/rooms", checkAuth, function(req, res, next) {
 	var result = [];
 	rooms.forEach(function(room) {
 		if(room.users.indexOf(req.session.userId) !== -1) {
-			result.push(room);
+			result.push(formatRoomObject(room));
 		}
 	});
 	res.apiResponse(result);
@@ -214,7 +223,7 @@ app.post("/rooms", checkAuth, function(req, res, next) {
 	};
 	rooms.push(room);
 
-	res.apiResponse(room);
+	res.apiResponse(formatRoomObject(room));
 });
 app.get("/rooms/:id", checkAuth, function(req, res, next) {
 	var roomId = req.params.id;
@@ -226,7 +235,7 @@ app.get("/rooms/:id", checkAuth, function(req, res, next) {
 	if(room.users.indexOf(req.session.userId) === -1) {
 		return next(new Error("ACCESS_TO_ROOM_DENIED"));
 	}
-	res.apiResponse(room);
+	res.apiResponse(formatRoomObject(room));
 });
 // - Get all users in a room 
 app.get("/rooms/:id/users", checkAuth, function(req, res, next) {
@@ -265,8 +274,8 @@ app.post("/rooms/:id/users", checkAuth, function(req, res, next) {
 	}
 	if(room.users.indexOf(userId) === -1) {
 		room.users.push(userId);
+		addEventForUser(userId, "room", [formatRoomObject(room)]);
 	}
-	addEventForUser(userId, "room", [room]);
 	addEventForUsersInRoom(roomId, "invited", [roomId, userId]);
 	res.apiResponse(room);
 });
@@ -282,7 +291,7 @@ app.get("/rooms/:id/messages", checkAuth, function(req, res, next) {
 	if(room.users.indexOf(req.session.userId) === -1) {
 		return next(new Error("ACCESS_TO_ROOM_DENIED"));
 	}
-	return room.messages.slice(-1000);
+	return res.apiResponse(room.messages.slice(-1000));
 });
 // - Get last N messages before lastMessageId for a room 
 app.get("/rooms/:id/messages/before/:lastMessageId", checkAuth, function(req, res, next) {

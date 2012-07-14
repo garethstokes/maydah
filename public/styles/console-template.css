@@ -1,22 +1,56 @@
+body {
+	font-family: sans-serif;
+	background: rgb(242,245,246); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(242,245,246,1) 0%, rgba(227,234,237,1) 37%, rgba(200,215,220,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(242,245,246,1)), color-stop(37%,rgba(227,234,237,1)), color-stop(100%,rgba(200,215,220,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(242,245,246,1) 0%,rgba(227,234,237,1) 37%,rgba(200,215,220,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(242,245,246,1) 0%,rgba(227,234,237,1) 37%,rgba(200,215,220,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(242,245,246,1) 0%,rgba(227,234,237,1) 37%,rgba(200,215,220,1) 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  rgba(242,245,246,1) 0%,rgba(227,234,237,1) 37%,rgba(200,215,220,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f2f5f6', endColorstr='#c8d7dc',GradientType=0 ); /* IE6-9 */
+
+}
 body div.room {
-	width: 400px;
-	margin: 5px;
-	display: inline-block;
-	background: rgb(238,238,238); /* Old browsers */
-	background: -moz-linear-gradient(top,  rgba(238,238,238,1) 0%, rgba(204,204,204,1) 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(238,238,238,1)), color-stop(100%,rgba(204,204,204,1))); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top,  rgba(238,238,238,1) 0%,rgba(204,204,204,1) 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top,  rgba(238,238,238,1) 0%,rgba(204,204,204,1) 100%); /* Opera 11.10+ */
-	background: -ms-linear-gradient(top,  rgba(238,238,238,1) 0%,rgba(204,204,204,1) 100%); /* IE10+ */
-	background: linear-gradient(to bottom,  rgba(238,238,238,1) 0%,rgba(204,204,204,1) 100%); /* W3C */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeee', endColorstr='#cccccc',GradientType=0 ); /* IE6-9 */	
+    width: 400px;
+    margin: 5px;
+    display: inline-block;
+	background: #c8d7dc;
 }
 
-body div.room div.title {
-	font-size: 1.3em;
+body div.scroller div.room div.title {
+    font-size: 1.6em;
+    padding: 4px;
 }
 
-body div.scroller div.room div.input input 
-{
-	width: 100%;
+body div.scroller div.room div.input input {
+    width: 100%;
+}
+
+body div.scroller div.room div.output div.chat-item {
+	position: relative;
+	background: #F0F0F0;
+	border: 1px solid #EEE;
+	margin: 8px;
+	padding: 8px;
+}
+
+body div.scroller div.room div.output div.chat-item div.user {
+	font-weight: bold;
+	color: #777;
+	font-size: 0.9em;
+	margin-bottom: 16px;
+}
+
+body div.scroller div.room div.output div.chat-item div.date {
+	font-weight: bold;
+	color: #777;
+	font-size: 0.8em;
+	position: absolute;
+	top: 8px;
+	right: 8px;
+}
+
+
+body div.scroller div.room div.output div.chat-item div.message {
+	font-size: 1.1em;
 }
