@@ -44,6 +44,18 @@ func toJson(item interface{}) []byte {
 }
 
 func main() {
+	// POST /login
+	web.Post("/login", func(ctx * web.Context) {
+		ctx.SetHeader("Content-Type", "application/json", true);
+
+		web.Config.CookieSecret = "colbert";
+		message := Message{ Name: "Malcom Renoylds", Id: 1};
+		ctx.SetSecureCookie("session", strconv.FormatInt(message.Id, 32), 0);
+
+		ctx.Write(toJson(message));
+	});
+
+	// GET /rooms
 	web.Get("/rooms", func(ctx * web.Context) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 		messages := []Message{getRoom()}
@@ -53,6 +65,7 @@ func main() {
 		ctx.Write(response);
 	});
 
+	// GET /rooms/:id
 	web.Get("/rooms/([0-9]+)", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 		id,_ := strconv.ParseInt(val, 0, 64);
@@ -64,6 +77,8 @@ func main() {
 		ctx.Write(response);
 	});
 
+	// GET /rooms/:id/users
+	// gets the users for a room
 	web.Get("/rooms/([0-9]+)/users", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 
