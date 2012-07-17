@@ -12,11 +12,27 @@ type Message struct {
 	Id int64
 }
 
-func getMessage() Message {
+func getRoom() Message {
 	return Message{
 		Name: "Joss whedon's fan club",
 		Id:	1,
 	}
+}
+
+func getUsers() []Message {
+	mal := Message{
+		Name: "Malcom Renyolds",
+		Id:	1,
+	};
+	kaylee := Message{
+		Name: "Kaylee Frye",
+		Id: 2,
+	};
+
+	return []Message{
+		mal,
+		kaylee,
+	};
 }
 
 func toJson(item interface{}) []byte {
@@ -30,7 +46,7 @@ func toJson(item interface{}) []byte {
 func main() {
 	web.Get("/rooms", func(ctx * web.Context) {
 		ctx.SetHeader("Content-Type", "application/json", true);
-		messages := []Message{getMessage()}
+		messages := []Message{getRoom()}
 		fmt.Println(messages);
 
 		response := toJson(messages);
@@ -41,10 +57,18 @@ func main() {
 		ctx.SetHeader("Content-Type", "application/json", true);
 		id,_ := strconv.ParseInt(val, 0, 64);
 
-		message := getMessage();
+		message := getRoom();
 		message.Id = id;
 		response := toJson(message);
 
+		ctx.Write(response);
+	});
+
+	web.Get("/rooms/([0-9]+)/users", func(ctx * web.Context, val string) {
+		ctx.SetHeader("Content-Type", "application/json", true);
+
+		users := getUsers();
+		response := toJson(users);
 		ctx.Write(response);
 	});
 
