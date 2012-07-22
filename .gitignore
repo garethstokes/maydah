@@ -22,3 +22,4 @@ _testmain.go
 *.exe
 
 maydah.sqlite
+auth.cookie

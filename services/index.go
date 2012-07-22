@@ -4,70 +4,59 @@ import (
     "web"
 	"strconv"
 	"fmt"
-	"encoding/json"
 )
 
-type Message struct {
-	Name string
-	Id int64
+type ApiResponse struct {
+	Ok bool
+	Result interface{}
 }
-
-func getRoom() Message {
-	return Message{
-		Name: "Joss whedon's fan club",
-		Id:	1,
-	}
-}
-
-func getUsers() []Message {
-	mal := Message{
-		Name: "Malcom Renyolds",
-		Id:	1,
-	};
-	kaylee := Message{
-		Name: "Kaylee Frye",
-		Id: 2,
-	};
-
-	return []Message{
-		mal,
-		kaylee,
-	};
-}
-
-func getMessages() []Message {
-	a := Message{
-		Name: "Role call!!",
-		Id: 1,
-	};
-
-	b := Message{
-		Name: "Im here capt'n",
-		Id: 2,
-	};
-
-	c := Message{
-		Name: "Good work kaylee, now where is that lazy, no good Jayne?",
-		Id: 1,
-	};
-
-	return []Message{a,b,c};
-}
-
-func toJson(item interface{}) []byte {
-	b, err := json.Marshal(item)
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-	return b;
-}
-
-var (
-	MESSAGE_STORE []Message
-)
 
 func init() {
-	MESSAGE_STORE = getMessages();
+	web.Config.CookieSecret = "I am a pole and so can you";
+}
+
+func apiError(ctx * web.Context, message string) {
+	response := ApiResponse{
+		Ok: false,
+		Result: message,
+	};
+	ctx.Write(toJson(response));
+}
+
+func apiSecurePostWithNoValue(route string, callback func(* web.Context)) {
+	// wrap our secure code around the caller's handler
+	handler := func(ctx * web.Context) {
+		ctx.ContentType("json");
+
+		// pull out the user data from the session
+		cookie, success := ctx.GetSecureCookie("session");
+		if !success {
+			ctx.Server.Logger.Println("Session cookie is invalid");
+			apiError(ctx, "Invalid session cookie");
+			return;
+		}
+
+		if cookie == "" {
+			apiError(ctx, "Corrupt user data");
+			return;
+		}
+
+		//ctx.Server.Logger.Println("found user", cookie);
+
+		callback(ctx);
+	};
+
+	web.Post(route, handler);
+}
+
+func apiSecurePost(route string, callback func((* web.Context), string)) {
+	// wrap our secure code around the caller's handler
+	handler := func(ctx * web.Context, val string) {
+		ctx.ContentType("json");
+		callback(ctx, val);
+	};
+
+	web.Post(route, handler);
 }
 
 func main() {
@@ -76,22 +65,24 @@ func main() {
 	web.Post("/login", func(ctx * web.Context) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 
-		web.Config.CookieSecret = "colbert";
-		message := Message{ Name: "Malcom Renoylds", Id: 1};
-		ctx.SetSecureCookie("session", strconv.FormatInt(message.Id, 32), 0);
+		user := userValidate("mal@serenity.com", "alliance");
+		dough := toJson(user);
+		ctx.SetSecureCookie("session", string(dough), (60 * 15));
 
-		ctx.Write(toJson(message));
+		//sessionAdd(user.Id, &user);
+
+		ctx.Write(toJson(user));
 	});
 
 	// GET /rooms
 	// Gets all the rooms
-	web.Get("/rooms", func(ctx * web.Context) {
-		ctx.SetHeader("Content-Type", "application/json", true);
+	apiSecurePostWithNoValue("/rooms", func(ctx * web.Context) {
 		messages := []Message{getRoom()}
 		fmt.Println(messages);
 
 		response := toJson(messages);
 		ctx.Write(response);
+
 	});
 
 	// GET /rooms/:id
