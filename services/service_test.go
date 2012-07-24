@@ -26,18 +26,9 @@ func TestLogin(t * testing.T) {
 	user := new(User)
 	json.Unmarshal(recorder.Body.Bytes(), user)
 
-	if user.Name != "Malcom Renyolds" {
-		t.Error("Incorrect name returned");
+	testuser := User{1, "Malcom Renyolds", "mal@serenity.com"}
+
+	if property, ok := user.EqualTo(testuser); ok == false {
+		t.Error("Incorrect response from server:", property);
 	}
-
-	if user.Email != "mal@serenity.com" {
-		t.Error("Incorrect email returned");
-	}
-
-	if user.Id != 1 {
-		t.Error("Incorrect id returned");
-	}
-
-
-	fmt.Println("Result", user)
 }
