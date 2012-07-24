@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 	"web"
 	"net/http"
@@ -30,5 +29,10 @@ func TestLogin(t * testing.T) {
 
 	if property, ok := user.EqualTo(testuser); ok == false {
 		t.Error("Incorrect response from server:", property);
+	}
+
+	cookie := recorder.Header().Get("Set-Cookie")
+	if cookie == "" {
+		t.Error("session cookie not being returned")
 	}
 }
