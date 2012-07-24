@@ -23,7 +23,7 @@ func apiError(ctx * web.Context, message string) {
 	ctx.Write(toJson(response));
 }
 
-func apiSecurePostWithNoValue(route string, callback func(* web.Context)) {
+func api(verb string, route string, callback func(* web.Context)) {
 	// wrap our secure code around the caller's handler
 	handler := func(ctx * web.Context) {
 		ctx.ContentType("json");
@@ -42,24 +42,47 @@ func apiSecurePostWithNoValue(route string, callback func(* web.Context)) {
 		}
 
 		//ctx.Server.Logger.Println("found user", cookie);
-
 		callback(ctx);
 	};
 
+	if verb == "GET" {
+		web.Get(route, handler);
+		return;
+	}
+
 	web.Post(route, handler);
 }
 
-func apiSecurePost(route string, callback func((* web.Context), string)) {
+func apiWithValue(verb string, route string, callback func((* web.Context), string)) {
 	// wrap our secure code around the caller's handler
 	handler := func(ctx * web.Context, val string) {
 		ctx.ContentType("json");
+
+		// pull out the user data from the session
+		cookie, success := ctx.GetSecureCookie("session");
+		if !success {
+			ctx.Server.Logger.Println("Session cookie is invalid");
+			apiError(ctx, "Invalid session cookie");
+			return;
+		}
+
+		if cookie == "" {
+			apiError(ctx, "Corrupt user data");
+			return;
+		}
+
 		callback(ctx, val);
 	};
+
+	if verb == "GET" {
+		web.Get(route, handler);
+		return;
+	}
 
 	web.Post(route, handler);
 }
 
-func main() {
+func RegisterRoutes() {
 	// POST /login
 	// Logs the user in
 	web.Post("/login", func(ctx * web.Context) {
@@ -76,7 +99,7 @@ func main() {
 
 	// GET /rooms
 	// Gets all the rooms
-	apiSecurePostWithNoValue("/rooms", func(ctx * web.Context) {
+	api("POST", "/rooms", func(ctx * web.Context) {
 		messages := []Message{getRoom()}
 		fmt.Println(messages);
 
@@ -87,7 +110,7 @@ func main() {
 
 	// GET /rooms/:id
 	// Gets the room info
-	web.Get("/rooms/([0-9]+)", func(ctx * web.Context, val string) {
+	apiWithValue("Get", "/rooms/([0-9]+)", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 		id,_ := strconv.ParseInt(val, 0, 64);
 
@@ -100,7 +123,7 @@ func main() {
 
 	// GET /rooms/:id/users
 	// gets the users for a room
-	web.Get("/rooms/([0-9]+)/users", func(ctx * web.Context, val string) {
+	apiWithValue("GET", "/rooms/([0-9]+)/users", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 
 		users := getUsers();
@@ -110,7 +133,7 @@ func main() {
 
 	// GET /rooms/$id/messaes
 	// gets that last {n} messages for a room. 
-	web.Get("/rooms/([0-9]+)/messages", func(ctx * web.Context, val string) {
+	apiWithValue("GET", "/rooms/([0-9]+)/messages", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 
 		ctx.Write(toJson(MESSAGE_STORE));
@@ -118,7 +141,7 @@ func main() {
 
 	// POST /rooms/:id/messages
 	// add a message to a room
-	web.Post("/rooms/([0-9]+)/messages", func(ctx * web.Context, val string) {
+	apiWithValue("POST", "/rooms/([0-9]+)/messages", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 
 		message := Message{
@@ -129,6 +152,9 @@ func main() {
 		MESSAGE_STORE = append(MESSAGE_STORE, message);
 		ctx.Write(toJson(message));
 	});
+}
 
+func main() {
+	RegisterRoutes();
     web.Run("0.0.0.0:9999")
 }
