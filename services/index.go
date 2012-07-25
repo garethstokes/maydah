@@ -3,7 +3,7 @@ package main
 import (
     "web"
 	"strconv"
-	"fmt"
+	"encoding/json"
 )
 
 type ApiResponse struct {
@@ -16,11 +16,18 @@ func init() {
 }
 
 func apiError(ctx * web.Context, message string) {
-	response := ApiResponse{
+	response := ApiResponse {
 		Ok: false,
 		Result: message,
-	};
+	}
 	ctx.Write(toJson(response));
+}
+
+func apiOk(result interface{}) (ApiResponse) {
+	return ApiResponse {
+		Ok: true,
+		Result: result,
+	}
 }
 
 func api(verb string, route string, callback func(* web.Context)) {
@@ -40,6 +47,10 @@ func api(verb string, route string, callback func(* web.Context)) {
 			apiError(ctx, "Corrupt user data");
 			return;
 		}
+
+		user := new(User)
+		json.Unmarshal([]byte(cookie), user)
+		ctx.User = user
 
 		//ctx.Server.Logger.Println("found user", cookie);
 		callback(ctx);
@@ -71,6 +82,10 @@ func apiWithValue(verb string, route string, callback func((* web.Context), stri
 			return;
 		}
 
+		user := new(User)
+		json.Unmarshal([]byte(cookie), user)
+		ctx.User = user
+
 		callback(ctx, val);
 	};
 
@@ -88,29 +103,36 @@ func RegisterRoutes() {
 	web.Post("/login", func(ctx * web.Context) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 
-		user := userValidate("mal@serenity.com", "alliance");
+		user, err := db.ValidateUser("Malcom Renyolds", "alliance")
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
+
 		dough := toJson(user);
 		ctx.SetSecureCookie("session", string(dough), (60 * 15));
 
 		//sessionAdd(user.Id, &user);
 
-		ctx.Write(toJson(user));
+		ctx.Write(toJson(apiOk(user)));
 	});
 
 	// GET /rooms
 	// Gets all the rooms
-	api("POST", "/rooms", func(ctx * web.Context) {
-		messages := []Message{getRoom()}
-		fmt.Println(messages);
+	api("GET", "/rooms", func(ctx * web.Context) {
+		user := ctx.User.(* User)
+		rooms, err := db.FindRoomsForUser(* user)
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
 
-		response := toJson(messages);
-		ctx.Write(response);
-
+		ctx.Write(toJson(apiOk(rooms)));
 	});
 
 	// GET /rooms/:id
 	// Gets the room info
-	apiWithValue("Get", "/rooms/([0-9]+)", func(ctx * web.Context, val string) {
+	apiWithValue("GET", "/rooms/([0-9]+)", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 		id,_ := strconv.ParseInt(val, 0, 64);
 
@@ -156,5 +178,9 @@ func RegisterRoutes() {
 
 func main() {
 	RegisterRoutes();
+
+	db.Open()
+	defer db.Close()
+
     web.Run("0.0.0.0:9999")
 }
