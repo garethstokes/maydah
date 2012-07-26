@@ -155,6 +155,8 @@ func (d * database) GetUsersForRoom(roomid int, user User) (users []User, err er
 		break
 	}
 
+	// this is kinda hacky, should really
+	// put this filter in the db query itself
 	for _, u := range users {
 		if _, ok := user.EqualTo(u); ok {
 			// the user is in the set
@@ -168,6 +170,47 @@ func (d * database) GetUsersForRoom(roomid int, user User) (users []User, err er
 	// see the result
 	users = []User{}
 	return users, nil
+}
+
+func (d * database) GetLastMessagesForRoom(roomid int) (messages []Message, err error) {
+	command := "select messageid, roomid, userid, message from message where roomid = @roomid order by messageid limit 50;";
+
+	useridParameter := pgsql.NewParameter("@roomid", pgsql.Integer)
+
+	statement, err := d.connection.Prepare(command, useridParameter)
+	if err != nil {
+		fmt.Println("statement error")
+		fmt.Println(err)
+		return messages, err
+	}
+	defer statement.Close()
+
+	// needs to be called after Prepare()
+	useridParameter.SetValue(roomid)
+
+	results, err := statement.Query()
+	if err != nil {
+		fmt.Println("query error")
+		fmt.Println(err)
+		return messages, err
+	}
+	defer results.Close()
+
+	messages = make([]Message, 0)
+	for {
+		hasData, _ := results.FetchNext()
+
+		if (hasData) {
+			message := new(Message)
+			results.Scan(&message.Id, &message.RoomId, &message.UserId, &message.Message)
+			messages = append(messages, *message)
+			continue
+		}
+
+		break
+	}
+
+	return messages, nil
 }
 
 var db = new(database)

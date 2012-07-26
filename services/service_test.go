@@ -149,3 +149,26 @@ func TestHandler(t * testing.T) {
 		t.Fatal("incorrect message returned, expecting 'Hello human' got:", message)
 	}
 }
+
+func TestGetMessages(t * testing.T) {
+	db.Open()
+	defer db.Close()
+
+	fmt.Println("GetMessages")
+
+	// Arrange
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/rooms/1/messages", nil)
+	request.Header = http.Header{}
+
+	// Act
+	_, cookie := login(t)
+	request.Header.Set("Cookie", cookie)
+	web.AdHoc(recorder, request)
+	result := fromJson(t, recorder.Body.Bytes())
+
+	// Assert
+	for _, message := range result.([]interface{}) {
+		fmt.Println(message)
+	}
+}

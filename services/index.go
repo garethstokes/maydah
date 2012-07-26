@@ -118,36 +118,31 @@ func RegisterRoutes() {
 	// GET /rooms/$id/messaes
 	// gets that last {n} messages for a room. 
 	web.Get("/rooms/([0-9]+)/messages$", func(ctx * web.Context, val string) {
-		ctx.SetHeader("Content-Type", "application/json", true);
+		roomid, err := strconv.ParseInt(val, 0, 32)
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
 
-		ctx.Write(toJson(MESSAGE_STORE));
+		messages, err := db.GetLastMessagesForRoom(int(roomid));
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
+
+		ctx.Write(toJson(apiOk(messages)));
 	});
 
 	// POST /rooms/:id/messages
 	// add a message to a room
 	web.Post("/rooms/([0-9]+)/messages$", func(ctx * web.Context, val string) {
-		ctx.SetHeader("Content-Type", "application/json", true);
-
-		message := Message{
-			Name: "shut ya face, im here",
-			Id: 3,
-		};
-
-		MESSAGE_STORE = append(MESSAGE_STORE, message);
-		ctx.Write(toJson(message));
+		apiError(ctx, "not implemented yet")
 	});
 
 	// GET /rooms/:id
 	// Gets the room info
 	web.Get("/rooms/([0-9]+)", func(ctx * web.Context, val string) {
-		ctx.SetHeader("Content-Type", "application/json", true);
-		id,_ := strconv.ParseInt(val, 0, 64);
-
-		message := getRoom();
-		message.Id = id;
-		response := toJson(message);
-
-		ctx.Write(response);
+		apiError(ctx, "not implemented yet")
 	});
 
 	// set up any modules we may need
