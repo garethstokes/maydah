@@ -155,6 +155,18 @@ func (d * database) GetUsersForRoom(roomid int, user User) (users []User, err er
 		break
 	}
 
+	for _, u := range users {
+		if _, ok := user.EqualTo(u); ok {
+			// the user is in the set
+			// and we can return
+			return users, nil
+		}
+	}
+
+	// we never found the user in the result
+	// which means he aint got permission to
+	// see the result
+	users = []User{}
 	return users, nil
 }
 
