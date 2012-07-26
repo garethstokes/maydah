@@ -79,7 +79,6 @@ func (d * database) FindRoomsForUser(user User) (rooms []Room, err error) {
 	command := "select r.roomid, r.name from room r inner join roomhasuser ru on r.roomid = ru.roomid where ru.userid = @userid;";
 
 	useridParameter := pgsql.NewParameter("@userid", pgsql.Integer)
-	useridParameter.SetValue(1)
 
 	statement, err := d.connection.Prepare(command, useridParameter)
 	if err != nil {
@@ -88,6 +87,9 @@ func (d * database) FindRoomsForUser(user User) (rooms []Room, err error) {
 		return rooms, err
 	}
 	defer statement.Close()
+
+	// needs to be called after Prepare()
+	useridParameter.SetValue(int(user.Id))
 
 	results, err := statement.Query()
 	if err != nil {
@@ -112,6 +114,48 @@ func (d * database) FindRoomsForUser(user User) (rooms []Room, err error) {
 	}
 
 	return rooms, nil
+}
+
+func (d * database) GetUsersForRoom(roomid int, user User) (users []User, err error) {
+	users = []User{}
+
+	command := "select u.userid, u.name, u.email from person u inner join roomhasuser r on u.userid = r.userid where r.roomid = @roomid;";
+
+	useridParameter := pgsql.NewParameter("@roomid", pgsql.Integer)
+
+
+	statement, err := d.connection.Prepare(command, useridParameter)
+	if err != nil {
+		fmt.Println("statement error")
+		fmt.Println(err)
+		return users, err
+	}
+	defer statement.Close()
+
+	useridParameter.SetValue(roomid)
+
+	results, err := statement.Query()
+	if err != nil {
+		fmt.Println("query error")
+		fmt.Println(err)
+		return users, err
+	}
+	defer results.Close()
+
+	for {
+		hasData, _ := results.FetchNext()
+
+		if (hasData) {
+			user := new(User)
+			results.Scan(&user.Id, &user.Name, &user.Email)
+			users = append(users, *user)
+			continue
+		}
+
+		break
+	}
+
+	return users, nil
 }
 
 var db = new(database)

@@ -50,7 +50,7 @@ func api(verb string, route string, callback func(* web.Context)) {
 
 		user := new(User)
 		json.Unmarshal([]byte(cookie), user)
-		ctx.User = user
+		ctx.User = (* user)
 
 		//ctx.Server.Logger.Println("found user", cookie);
 		callback(ctx);
@@ -84,7 +84,7 @@ func apiWithValue(verb string, route string, callback func((* web.Context), stri
 
 		user := new(User)
 		json.Unmarshal([]byte(cookie), user)
-		ctx.User = user
+		ctx.User = (* user)
 
 		callback(ctx, val);
 	};
@@ -112,22 +112,62 @@ func RegisterRoutes() {
 		dough := toJson(user);
 		ctx.SetSecureCookie("session", string(dough), (60 * 15));
 
-		//sessionAdd(user.Id, &user);
-
 		ctx.Write(toJson(apiOk(user)));
 	});
 
 	// GET /rooms
 	// Gets all the rooms
 	api("GET", "/rooms", func(ctx * web.Context) {
-		user := ctx.User.(* User)
-		rooms, err := db.FindRoomsForUser(* user)
+		user := ctx.User.(User)
+		rooms, err := db.FindRoomsForUser(user)
 		if err != nil {
 			apiError(ctx, err.Error())
 			return
 		}
 
 		ctx.Write(toJson(apiOk(rooms)));
+	});
+
+	// GET /rooms/:id/users
+	// gets the users for a room
+	apiWithValue("GET", "/rooms/([0-9]+)/users", func(ctx * web.Context, val string) {
+		user := ctx.User.(User)
+
+		roomid, err := strconv.ParseInt(val, 0, 32)
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
+
+		users, err := db.GetUsersForRoom(int(roomid), user)
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
+
+		ctx.Write(toJson(apiOk(users)));
+	});
+
+	// GET /rooms/$id/messaes
+	// gets that last {n} messages for a room. 
+	apiWithValue("GET", "/rooms/([0-9]+)/messages$", func(ctx * web.Context, val string) {
+		ctx.SetHeader("Content-Type", "application/json", true);
+
+		ctx.Write(toJson(MESSAGE_STORE));
+	});
+
+	// POST /rooms/:id/messages
+	// add a message to a room
+	apiWithValue("POST", "/rooms/([0-9]+)/messages$", func(ctx * web.Context, val string) {
+		ctx.SetHeader("Content-Type", "application/json", true);
+
+		message := Message{
+			Name: "shut ya face, im here",
+			Id: 3,
+		};
+
+		MESSAGE_STORE = append(MESSAGE_STORE, message);
+		ctx.Write(toJson(message));
 	});
 
 	// GET /rooms/:id
@@ -141,38 +181,6 @@ func RegisterRoutes() {
 		response := toJson(message);
 
 		ctx.Write(response);
-	});
-
-	// GET /rooms/:id/users
-	// gets the users for a room
-	apiWithValue("GET", "/rooms/([0-9]+)/users", func(ctx * web.Context, val string) {
-		ctx.SetHeader("Content-Type", "application/json", true);
-
-		users := getUsers();
-		response := toJson(users);
-		ctx.Write(response);
-	});
-
-	// GET /rooms/$id/messaes
-	// gets that last {n} messages for a room. 
-	apiWithValue("GET", "/rooms/([0-9]+)/messages", func(ctx * web.Context, val string) {
-		ctx.SetHeader("Content-Type", "application/json", true);
-
-		ctx.Write(toJson(MESSAGE_STORE));
-	});
-
-	// POST /rooms/:id/messages
-	// add a message to a room
-	apiWithValue("POST", "/rooms/([0-9]+)/messages", func(ctx * web.Context, val string) {
-		ctx.SetHeader("Content-Type", "application/json", true);
-
-		message := Message{
-			Name: "shut ya face, im here",
-			Id: 3,
-		};
-
-		MESSAGE_STORE = append(MESSAGE_STORE, message);
-		ctx.Write(toJson(message));
 	});
 }
 
