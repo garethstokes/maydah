@@ -4,6 +4,7 @@ import (
     "web"
 	"strconv"
 	"encoding/json"
+	"strings"
 )
 
 type ApiResponse struct {
@@ -30,71 +31,37 @@ func apiOk(result interface{}) (ApiResponse) {
 	}
 }
 
-func api(verb string, route string, callback func(* web.Context)) {
-	// wrap our secure code around the caller's handler
-	handler := func(ctx * web.Context) {
-		ctx.ContentType("json");
+func cookieModule(ctx * web.Context) {
+	// Fail early if we are only logging on
+	path := ctx.Request.URL.String()
+	if strings.Contains("/login", path) {
+		return
+	}
 
-		// pull out the user data from the session
-		cookie, success := ctx.GetSecureCookie("session");
-		if !success {
-			ctx.Server.Logger.Println("Session cookie is invalid");
-			apiError(ctx, "Invalid session cookie");
-			return;
-		}
-
-		if cookie == "" {
-			apiError(ctx, "Corrupt user data");
-			return;
-		}
-
-		user := new(User)
-		json.Unmarshal([]byte(cookie), user)
-		ctx.User = (* user)
-
-		//ctx.Server.Logger.Println("found user", cookie);
-		callback(ctx);
-	};
-
-	if verb == "GET" {
-		web.Get(route, handler);
+	// Pull out the user data from the cookie
+	// and set the session
+	cookie, success := ctx.GetSecureCookie("session");
+	if !success {
+		ctx.Server.Logger.Println("Session cookie is invalid");
+		apiError(ctx, "Invalid session cookie");
 		return;
 	}
 
-	web.Post(route, handler);
+	if cookie == "" {
+		apiError(ctx, "Corrupt user data");
+		return;
+	}
+
+	user := new(User)
+	json.Unmarshal([]byte(cookie), user)
+	ctx.User = (* user)
+
 }
 
-func apiWithValue(verb string, route string, callback func((* web.Context), string)) {
-	// wrap our secure code around the caller's handler
-	handler := func(ctx * web.Context, val string) {
-		ctx.ContentType("json");
-
-		// pull out the user data from the session
-		cookie, success := ctx.GetSecureCookie("session");
-		if !success {
-			ctx.Server.Logger.Println("Session cookie is invalid");
-			apiError(ctx, "Invalid session cookie");
-			return;
-		}
-
-		if cookie == "" {
-			apiError(ctx, "Corrupt user data");
-			return;
-		}
-
-		user := new(User)
-		json.Unmarshal([]byte(cookie), user)
-		ctx.User = (* user)
-
-		callback(ctx, val);
-	};
-
-	if verb == "GET" {
-		web.Get(route, handler);
-		return;
-	}
-
-	web.Post(route, handler);
+func jsonModule(ctx * web.Context) {
+	// Lets set the response content type while 
+	// we are here
+	ctx.ContentType("json")
 }
 
 func RegisterRoutes() {
@@ -117,7 +84,7 @@ func RegisterRoutes() {
 
 	// GET /rooms
 	// Gets all the rooms
-	api("GET", "/rooms", func(ctx * web.Context) {
+	web.Get("/rooms", func(ctx * web.Context) {
 		user := ctx.User.(User)
 		rooms, err := db.FindRoomsForUser(user)
 		if err != nil {
@@ -130,7 +97,7 @@ func RegisterRoutes() {
 
 	// GET /rooms/:id/users
 	// gets the users for a room
-	apiWithValue("GET", "/rooms/([0-9]+)/users", func(ctx * web.Context, val string) {
+	web.Get("/rooms/([0-9]+)/users", func(ctx * web.Context, val string) {
 		user := ctx.User.(User)
 
 		roomid, err := strconv.ParseInt(val, 0, 32)
@@ -150,7 +117,7 @@ func RegisterRoutes() {
 
 	// GET /rooms/$id/messaes
 	// gets that last {n} messages for a room. 
-	apiWithValue("GET", "/rooms/([0-9]+)/messages$", func(ctx * web.Context, val string) {
+	web.Get("/rooms/([0-9]+)/messages$", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 
 		ctx.Write(toJson(MESSAGE_STORE));
@@ -158,7 +125,7 @@ func RegisterRoutes() {
 
 	// POST /rooms/:id/messages
 	// add a message to a room
-	apiWithValue("POST", "/rooms/([0-9]+)/messages$", func(ctx * web.Context, val string) {
+	web.Post("/rooms/([0-9]+)/messages$", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 
 		message := Message{
@@ -172,7 +139,7 @@ func RegisterRoutes() {
 
 	// GET /rooms/:id
 	// Gets the room info
-	apiWithValue("GET", "/rooms/([0-9]+)", func(ctx * web.Context, val string) {
+	web.Get("/rooms/([0-9]+)", func(ctx * web.Context, val string) {
 		ctx.SetHeader("Content-Type", "application/json", true);
 		id,_ := strconv.ParseInt(val, 0, 64);
 
@@ -182,6 +149,10 @@ func RegisterRoutes() {
 
 		ctx.Write(response);
 	});
+
+	// set up any modules we may need
+	web.AddModule(cookieModule)
+	web.AddModule(jsonModule)
 }
 
 func main() {

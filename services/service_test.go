@@ -123,3 +123,29 @@ func TestGetUsersForRoom(t * testing.T) {
 		fmt.Println(user)
 	}
 }
+
+func TestHandler(t * testing.T) {
+	// Arrange.
+	web.ResetModules()
+
+	web.Get("/handler/test", func(ctx * web.Context) {
+		message := ctx.User.(string)
+		ctx.WriteString(message)
+	})
+
+	web.AddModule(func(ctx * web.Context) {
+		ctx.User = "Hello human"
+	})
+
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/handler/test", nil)
+
+	// Act.
+	web.AdHoc(recorder, request)
+
+	// Assert.
+	message := string(recorder.Body.Bytes())
+	if message != "Hello human" {
+		t.Fatal("incorrect message returned, expecting 'Hello human' got:", message)
+	}
+}
