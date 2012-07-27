@@ -33,8 +33,7 @@ func (d * database) Options(o string) {
 
 func (d * database) Open() {
 	if d.options == "" {
-		//d.options = "host=ec2-50-16-155-252.compute-1.amazonaws.com dbname=maydah user=maydah password=sc3n1cr0ut3"
-		d.options = "dbname=maydah user=garrydanger"
+		d.options = "dbname=maydah user=maydah password=harry host=api.maydahapp.com"
 	}
 
 	fmt.Println("connecting:", d.options)
