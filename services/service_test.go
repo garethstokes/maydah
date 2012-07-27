@@ -46,9 +46,41 @@ func login(t * testing.T) (User, string) {
 	return *user, cookie
 }
 
+func createTestSchema() {
+	// Persons
+	db.Execute("INSERT INTO person (name, email, password) VALUES ('Malcom Renyolds', 'mal@serenity.com', 'alliance');")
+	db.Execute("INSERT INTO person (name, email, password) VALUES ('Jayne Cobb', 'jayne@serenity.com', 'guns');")
+	db.Execute("INSERT INTO person (name, email, password) VALUES ('Kaylee Frye', 'kaylee@serenity.com', 'engines');")
+	db.Execute("INSERT INTO person (name, email, password) VALUES ('Inara Serra', 'inara@serenity.com', 'malcom');")
+	db.Execute("INSERT INTO person (name, email, password) VALUES ('Zoe Washburne', 'zoe@serenity.com', 'hoban');")
+	db.Execute("INSERT INTO person (name, email, password) VALUES ('Hoban Washburne', 'hoban@serenity.com', 'zoe');")
+
+	// Rooms
+	db.Execute("INSERT INTO room (name) VALUES ('Joss wheedons fan club');")
+
+	// Relations
+	db.Execute("INSERT INTO roomhasuser (roomid, userid) VALUES (1, 1);")
+	db.Execute("INSERT INTO roomhasuser (roomid, userid) VALUES (1, 2);")
+	db.Execute("INSERT INTO roomhasuser (roomid, userid) VALUES (1, 3);")
+	db.Execute("INSERT INTO roomhasuser (roomid, userid) VALUES (1, 4);")
+	db.Execute("INSERT INTO roomhasuser (roomid, userid) VALUES (1, 5);")
+	db.Execute("INSERT INTO roomhasuser (roomid, userid) VALUES (1, 6);")
+
+	// Messages
+	db.Execute("INSERT INTO message (roomid, userid, message) VALUES (1, 1, 'roll call!');")
+}
+
 //initialize the routes
 func init() {
 	RegisterRoutes();
+
+	db.Options("dbname=maydah_test user=garrydanger")
+
+	db.Open()
+	defer db.Close()
+
+	db.ResetTables()
+	createTestSchema()
 }
 
 func TestLogin(t * testing.T) {

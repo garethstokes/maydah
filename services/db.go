@@ -15,10 +15,28 @@ import (
 
 type database struct {
 	connection * pgsql.Conn
+	options string
+}
+
+func (d database) createTables() {
+	d.Execute("CREATE TABLE IF NOT EXISTS project(projectId SERIAL PRIMARY KEY, name TEXT)");
+	d.Execute("CREATE TABLE IF NOT EXISTS person(userId SERIAL PRIMARY KEY, name TEXT, email TEXT, password TEXT, salt TEXT, hashIterations INTEGER, settings TEXT)");
+	d.Execute("CREATE TABLE IF NOT EXISTS projectHasUser(projectId INTEGER, userId INTEGER)");
+	d.Execute("CREATE TABLE IF NOT EXISTS room(roomId SERIAL PRIMARY KEY, name TEXT)");
+	d.Execute("CREATE TABLE IF NOT EXISTS roomHasUser(roomId INTEGER, userId INTEGER, parentMessageId INTEGER)");
+	d.Execute("CREATE TABLE IF NOT EXISTS message(messageId SERIAL PRIMARY KEY, roomId INTEGER, userId INTEGER, timestamp TIMESTAMP DEFAULT 'now', message TEXT)");
+}
+
+func (d * database) Options(o string) {
+	d.options = o
 }
 
 func (d * database) Open() {
-	connection, err := pgsql.Connect("dbname=maydah user=garrydanger", pgsql.LogError)
+	if d.options == "" {
+		d.options = "dbname=maydah user=garrydanger"
+	}
+
+	connection, err := pgsql.Connect(d.options, pgsql.LogError)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -27,12 +45,19 @@ func (d * database) Open() {
 	d.connection = connection
 
 	// lets make shit happen
-	d.Execute("CREATE TABLE IF NOT EXISTS project(projectId SERIAL PRIMARY KEY, name TEXT)");
-	d.Execute("CREATE TABLE IF NOT EXISTS person(userId SERIAL PRIMARY KEY, name TEXT, email TEXT, password TEXT, salt TEXT, hashIterations INTEGER, settings TEXT)");
-	d.Execute("CREATE TABLE IF NOT EXISTS projectHasUser(projectId INTEGER, userId INTEGER)");
-	d.Execute("CREATE TABLE IF NOT EXISTS room(roomId SERIAL PRIMARY KEY, name TEXT)");
-	d.Execute("CREATE TABLE IF NOT EXISTS roomHasUser(roomId INTEGER, userId INTEGER, parentMessageId INTEGER)");
-	d.Execute("CREATE TABLE IF NOT EXISTS message(messageId SERIAL PRIMARY KEY, roomId INTEGER, userId INTEGER, timestamp INTEGER, message TEXT)");
+	d.createTables()
+}
+
+func (d database) ResetTables() {
+	// drop all the tables
+	d.Execute("DROP TABLE IF EXISTS project;")
+	d.Execute("DROP TABLE IF EXISTS projectHasUser;")
+	d.Execute("DROP TABLE IF EXISTS room;")
+	d.Execute("DROP TABLE IF EXISTS roomHasUser;")
+	d.Execute("DROP TABLE IF EXISTS message;")
+
+	// make all the things!
+	d.createTables()
 }
 
 func (d * database) Close() {
