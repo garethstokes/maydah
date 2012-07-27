@@ -1,16 +1,45 @@
 var express = require("express"),
 	//db = require("./lib/db"),
+	io = require('socket.io'),
 	assert = require("node-assert-extras"),
 	uuid = require("uuid-js"),
 	_ = require("underscore"),
 	config = require("./config");
 
+var connect = require('express/node_modules/connect'),
+	MemoryStore = connect.middleware.session.MemoryStore,
+	parseCookie = connect.utils.parseCookie,
+	sessionStore = new MemoryStore();
+
 var app = express.createServer();
 
-//db.open(config.database);
+/*
+ * Socket.IO stuff
+ */
+var sockets = { };
+var socketManager = io.listen(app).set('authorization', function (data, accept) {
+	// all this is to get the cookie out of the session info
+	if (!data.headers.cookie) {
+		console.log("no cookie");
+		return accept('No cookie transmitted.', false);
+	}
+	var cookie = parseCookie(data.headers.cookie);
+	var sessionID = cookie["maydah"];
+	sessionStore.load(sessionID, function (err, session) {
+		if (err || !session || !session.userId) {
+			return accept('Error', false);
+		}
+		data.userId = session.userId;
+		return accept(null, true);
+	});
+}).sockets.on('connection', function (_socket) {
+  var userId = _socket.handshake.userId;
+  sockets[userId] = _socket;
+});
+
 
 /*
-    GENERIC ERROR HANDLER
+	GENERIC ERROR HANDLER
  */
 var errMsgs = {
 	"401": "Mmmm... you're not supposed to go there.",
@@ -32,7 +61,7 @@ app.error(function(err, req, res) {
 app.use(express["static"](__dirname + '/public'));
 app.use(express.bodyParser());
 app.use(express.cookieParser());
-app.use(express.session({ secret: "The queen is a cunthammer." }));
+app.use(express.session({ secret: "The queen is a cunthammer.", key:"maydah", store: sessionStore }));
 
 app.set("views", __dirname + "/views");
 app.set("view engine", "jade");
@@ -66,7 +95,6 @@ app.get("/landing", function(req, res, next) {
 // fake database
 var users = [];
 var rooms = [];
-var eventList = {};
 
 app.get("/db", function(req, res) {
 	res.send({users: users, rooms: rooms, eventList: eventList });
@@ -83,48 +111,6 @@ function findRoomById(roomId) {
 		return r.id === roomId;
 	});
 }
-
-// add events for a user
-function addEventForUser(userId, eventName, object) {
-	if(!eventList[userId]) {
-		eventList[userId] = [];
-	}
-	eventList[userId].push({
-		name: eventName,
-		data: object,
-		time: Date.now()
-	});
-}
-
-function addEventForUsersInRoom(roomId, eventName, object) {
-	var room = findRoomById(roomId);
-	if(!room) {
-		return;
-	}
-	room.users.forEach(function(userId) {
-		addEventForUser(userId, eventName, object);
-	});
-}
-
-function clearEventForUser(userId, eventName) {
-	if(!eventList[userId]) {
-		return;
-	}
-	eventList[userId] = eventList[userId].filter(function(e) {
-		return e.name === eventName;
-	});
-}
-
-function expireEvents() {
-	// anything older than 10 mins dies
-	var expires = Date.now() - 60000;
-	for(var key in eventList) {
-		eventList[key] = eventList[key].filter(function(e) {
-			return e.time > expires;
-		});
-	}
-}
-setInterval(expireEvents, 60000);
 
 var alltitles = ["captain", "ludicrious", "senator", "general"];
 var allusernames = ["evil", "danger", "typhoon", "disaster", "snowflake"];
@@ -153,6 +139,14 @@ function formatRoomObject(roomObj) {
 	return result;
 }
 
+var globalRoom = {
+	id: uuid.create(1).toString(),
+	name:  "Global Room",
+	users: [],
+	messages: []	
+}
+rooms.push(globalRoom);
+
 app.post("/login", function(req, res, next) {
 	try { 
 		var email = req.body.email;
@@ -169,14 +163,11 @@ app.post("/login", function(req, res, next) {
 
 		// hack so that new users automatically have a room
 		// this should be done on signup not signin
-		var room = {
-			id: uuid.create(1).toString(),
-			name:  username + "'s public room",
-			users: [req.session.userId],
-			messages: []
-		};
-		rooms.push(room);
-
+		globalRoom.users.push(userId);
+		if(sockets[userId]) {
+			sockets[userId].join(globalRoom.id);
+			socketManager.in(roomId).emit('invited', { roomId: roomId, userId: userId, user: user });
+		}
 		res.apiResponse(user);
 	} catch(e) {
 		console.error("api.login");
@@ -213,15 +204,20 @@ app.get("/rooms", checkAuth, function(req, res, next) {
 // - Create a room
 app.post("/rooms", checkAuth, function(req, res, next) {
 	var roomName = req.body.name;
+	var userId = req.session.userId;
 	assert.isString(roomName);
 
 	var room = {
 		id: uuid.create(1).toString(),
 		name: roomName,
-		users: [req.session.userId],
+		users: [userId],
 		messages: []
 	};
 	rooms.push(room);
+
+	if(sockets[userId]) {
+		sockets[userId].join(room.id)
+	}
 
 	res.apiResponse(formatRoomObject(room));
 });
@@ -274,9 +270,15 @@ app.post("/rooms/:id/users", checkAuth, function(req, res, next) {
 	}
 	if(room.users.indexOf(userId) === -1) {
 		room.users.push(userId);
-		addEventForUser(userId, "room", [formatRoomObject(room)]);
+
+		if(sockets[userId]) {
+			sockets[userId].join(roomId);
+			sockets[userId].emit("room", { room: formatRoomObject(room) });
+		}
 	}
-	addEventForUsersInRoom(roomId, "invited", [roomId, userId]);
+
+	socketManager.in(roomId).emit('invited', { roomId: roomId, userId: userId });
+
 	res.apiResponse(room);
 });
 // - Get last N messages for a room
@@ -307,12 +309,14 @@ app.get("/rooms/:id/messages/since/:lastMessageId", checkAuth, function(req, res
 app.post("/rooms/:id/messages", checkAuth, function(req, res, next) {
 	var message = req.body.message;
 	var roomId = req.params.id;
+	var userId = req.session.userId;
+
 	assert.isString(roomId);
 	assert.isString(message);	
 	var msg = {
 		id: uuid.create(1).toString(),
 		previousMessageId: null,
-		userId: req.session.userId,
+		userId: userId,
 		roomId: roomId,
 		message: message,
 		timestamp: Date.now()
@@ -328,18 +332,18 @@ app.post("/rooms/:id/messages", checkAuth, function(req, res, next) {
 		msg.previousMessageId = room.messages[room.messages.length - 1].id;
 	}
 	room.messages.push(msg);
-	addEventForUsersInRoom(roomId, "chat", [msg]);
-	res.apiResponse(msg);
-});
 
-app.get("/events", checkAuth, function(req, res, next) {
-	var userId = req.session.userId;
-	var evts = eventList[userId] || [];
-	res.apiResponse(evts);
-	eventList[userId] = [];
+	// in case the user is not part of the socketio room
+	if(sockets[userId]) {
+		sockets[userId].join(roomId);
+	}
+	socketManager.in(roomId).emit('chat', {data: msg, roomId: roomId});
+
+	res.apiResponse(msg);
 });
 
 // start the http server
 app.listen(config.port, function() {
 	console.log("Listening on " + config.port);
 });
+

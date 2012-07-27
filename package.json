@@ -10,7 +10,8 @@
         "sqlite3": "2.1.x",
         "node-assert-extras": "0.1.0",
         "uuid-js": "*",
-        "underscore": "*"
+        "underscore": "*",
+        "socket.io": "*"
     },
     "devDependencies": {
         "vows": "0.5.x"

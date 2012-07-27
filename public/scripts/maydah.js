@@ -1,6 +1,11 @@
 var maydah = { };
 (function(maydah){
 
+	// going to put a layer between socket and the frontend
+	// frontend <-> maydah <-> socket.io <-> backend
+	// this way plugins can hook into the maydah layer
+	// even if there isn't a socket.io portion to it
+
 	/* 
 	 * Event listener stuff
 	 */
@@ -53,7 +58,7 @@ var maydah = { };
 	 * room (roomObject) - this user was added to a room
 	 * invited (roomId, userId) - new user invited to the room
 	 * userInfo (userObject) - info for this user retrieved
-	 * chat (roomId, messageObject) - new chat message received
+	 * chat (messageObject) - new chat message received
 	 *
 	 * Failure events
 	 * usersInRoomFailed (roomId) - failed to get list of users in a room
@@ -227,21 +232,21 @@ var maydah = { };
 		$("head").append(scriptNode);
 	};
 
-	function doLongPoll() {
-		$.get("/events").success(function(response) {
-			var events = response.result;
-			for(var i=0,ii=events.length; i<ii; i++) {
-				var evnt = events[i];
-				emit.apply(null, [evnt.name].concat(evnt.data));
-			}
-			setTimeout(doLongPoll, 500);
-		}).error(function() {
-			console.log("Error running long poll");
-			setTimeout(doLongPoll, 500);
-		});
-	}
 	maydah.startListening = function() {
-		doLongPoll();
+		var socket = io.connect();
+		socket.on("chat", function(msg){ 
+			emit("chat", msg.data);
+		});
+		socket.on("room", function(msg){
+			console.log("room event", msg);
+		});
+		socket.on("invited", function(msg) {
+			if(msg.user) {
+				_userList[msg.user.id] = msg.user;
+				emit("userInfo", msg.user);
+			}
+			emit("invited", msg.roomId, msg.userId);
+		});
 	}
 	// expected startup sequence:
 	// 1: load interface
