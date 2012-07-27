@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/garrydanger/web"
+	"github.com/garethstokes/web"
 	"strconv"
 	"encoding/json"
 	"strings"
