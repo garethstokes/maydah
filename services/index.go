@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"encoding/json"
 	"strings"
+	"io/ioutil"
 )
 
 type ApiResponse struct {
@@ -136,7 +137,37 @@ func RegisterRoutes() {
 	// POST /rooms/:id/messages
 	// add a message to a room
 	web.Post("/rooms/([0-9]+)/messages$", func(ctx * web.Context, val string) {
-		apiError(ctx, "not implemented yet")
+		// first we need the user
+		user := ctx.User.(User)
+
+		// then we need the message
+		message, err := ioutil.ReadAll(ctx.Request.Body)
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
+
+		// then we get the room id
+		roomid, err := strconv.ParseInt(val, 0, 32)
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
+
+		// ...then we get the pow-ah
+		err = db.SaveMessage(user, int(roomid), string(message))
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
+
+		messages, err := db.GetLastMessagesForRoom(int(roomid));
+		if err != nil {
+			apiError(ctx, err.Error())
+			return
+		}
+
+		ctx.Write(toJson(apiOk(messages)));
 	});
 
 	// GET /rooms/:id

@@ -213,4 +213,35 @@ func (d * database) GetLastMessagesForRoom(roomid int) (messages []Message, err 
 	return messages, nil
 }
 
+func (d * database) SaveMessage(user User, roomid int, message string) (error) {
+	command := "insert into message (roomid, userid, message) values (@roomid, @userid, @message);";
+
+	useridParameter := pgsql.NewParameter("@roomid", pgsql.Integer)
+	roomidParameter := pgsql.NewParameter("@userid", pgsql.Integer)
+	messageParameter := pgsql.NewParameter("@message", pgsql.Varchar)
+
+	statement, err := d.connection.Prepare(command, useridParameter, roomidParameter, messageParameter)
+	if err != nil {
+		fmt.Println("statement error")
+		fmt.Println(err)
+		return err
+	}
+	defer statement.Close()
+
+	// needs to be called after Prepare()
+	useridParameter.SetValue(int(user.Id))
+	roomidParameter.SetValue(roomid)
+	messageParameter.SetValue(message)
+
+	results, err := statement.Query()
+	if err != nil {
+		fmt.Println("query error")
+		fmt.Println(err)
+		return err
+	}
+	defer results.Close()
+
+	return nil
+}
+
 var db = new(database)

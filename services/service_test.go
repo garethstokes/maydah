@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"encoding/json"
 	"fmt"
+	"io"
+	"bytes"
 )
 
 func fromJson(t * testing.T, b []byte) (interface{}) {
@@ -124,6 +126,7 @@ func TestGetUsersForRoom(t * testing.T) {
 	}
 }
 
+/*
 func TestHandler(t * testing.T) {
 	// Arrange.
 	web.ResetModules()
@@ -149,6 +152,7 @@ func TestHandler(t * testing.T) {
 		t.Fatal("incorrect message returned, expecting 'Hello human' got:", message)
 	}
 }
+*/
 
 func TestGetMessages(t * testing.T) {
 	db.Open()
@@ -160,6 +164,40 @@ func TestGetMessages(t * testing.T) {
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/rooms/1/messages", nil)
 	request.Header = http.Header{}
+
+	// Act
+	_, cookie := login(t)
+	request.Header.Set("Cookie", cookie)
+	web.AdHoc(recorder, request)
+	result := fromJson(t, recorder.Body.Bytes())
+
+	// Assert
+	for _, message := range result.([]interface{}) {
+		fmt.Println(message)
+	}
+}
+
+type nopCloser struct {
+    io.Reader
+}
+
+func (nopCloser) Close() error { return nil }
+
+func getNopCloser(buf *bytes.Buffer) nopCloser {
+    return nopCloser{buf}
+}
+
+func TestSaveMessages(t * testing.T) {
+	db.Open()
+	defer db.Close()
+
+	fmt.Println("SaveMessages")
+
+	// Arrange
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/rooms/1/messages", nil)
+	request.Header = http.Header{}
+	request.Body = getNopCloser(bytes.NewBufferString("this is a new message"))
 
 	// Act
 	_, cookie := login(t)
