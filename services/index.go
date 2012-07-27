@@ -1,7 +1,7 @@
 package main
 
 import (
-    "web"
+	"github.com/garrydanger/web"
 	"strconv"
 	"encoding/json"
 	"strings"
@@ -35,7 +35,7 @@ func apiOk(result interface{}) (ApiResponse) {
 func cookieModule(ctx * web.Context) {
 	// Fail early if we are only logging on
 	path := ctx.Request.URL.String()
-	if strings.Contains("/login", path) {
+	if strings.Contains(path, "/login") {
 		return
 	}
 
@@ -187,5 +187,5 @@ func main() {
 	db.Open()
 	defer db.Close()
 
-    web.Run("0.0.0.0:9999")
+    web.RunFcgi("0.0.0.0:9999")
 }
